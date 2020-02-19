@@ -1,12 +1,22 @@
+//HARDWARE
 
+//SOFTWARE
 
 
 void setup() {
-  // put your setup code here, to run once:
+  //HARDWARE
+
+  //SOFTWARE
 
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  //HARDWARE
+
+  //SOFTWARE
 
 }
+
+//HARDWARE
+
+//SOFTWARE
