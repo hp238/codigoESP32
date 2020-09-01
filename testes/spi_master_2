@@ -1,0 +1,171 @@
+/******************MASTER ESP************************/
+
+#include <SPI.h>
+
+class ESPMaster
+{
+private:
+    uint8_t _ss_pin;
+
+public:
+    ESPMaster(uint8_t pin):_ss_pin(pin) {}
+    void begin()
+    {
+        pinMode(_ss_pin, OUTPUT);
+        digitalWrite(_ss_pin, HIGH);
+    }
+
+    uint32_t readStatus()
+    {
+        digitalWrite(_ss_pin, LOW);
+        SPI.transfer(0x04);
+        uint32_t status = (SPI.transfer(0) | ((uint32_t)(SPI.transfer(0)) << 8) | ((uint32_t)(SPI.transfer(0)) << 16) | ((uint32_t)(SPI.transfer(0)) << 24));
+        digitalWrite(_ss_pin, HIGH);
+        return status;
+    }
+
+    void writeStatus(uint32_t status)
+    {
+        digitalWrite(_ss_pin, LOW);
+        SPI.transfer(0x01);
+        SPI.transfer(status & 0xFF);
+        SPI.transfer((status >> 8) & 0xFF);
+        SPI.transfer((status >> 16) & 0xFF);
+        SPI.transfer((status >> 24) & 0xFF);
+        digitalWrite(_ss_pin, HIGH);
+    }
+
+    void readData(uint8_t * data)
+    {
+        digitalWrite(_ss_pin, LOW);
+        SPI.transfer(0x03);
+        SPI.transfer(0x00);
+        for(uint8_t i=0; i<32; i++) {
+            data[i] = SPI.transfer(0);
+        }
+        digitalWrite(_ss_pin, HIGH);
+    }
+
+    void writeData(uint8_t * data, size_t len)
+    {
+        uint8_t i=0;
+        digitalWrite(_ss_pin, LOW);
+        SPI.transfer(0x02);
+        SPI.transfer(0x00);
+        while(len-- && i < 32) {
+            SPI.transfer(data[i++]);
+        }
+        while(i++ < 32) {
+            SPI.transfer(0);
+        }
+        digitalWrite(_ss_pin, HIGH);
+    }
+
+    String readData()
+    {
+        char data[33];
+        data[32] = 0;
+        readData((uint8_t *)data);
+        return String(data);
+    }
+
+    void writeData(const char * data)
+    {
+        writeData((uint8_t *)data, strlen(data));
+    }
+};
+
+ESPMaster esp(SS);
+
+void send(const char * message)
+{
+    Serial.print("Master: ");
+    Serial.println(message);
+    esp.writeData(message);
+    delay(10);
+    Serial.print("Slave: ");
+    Serial.println(esp.readData());
+    Serial.println();
+}
+
+void setup()
+{
+    Serial.begin(115200);
+    SPI.begin();
+    esp.begin();
+    delay(1000);
+    send("Hello Slave!");
+}
+
+void loop()
+{
+    delay(1000);
+    send("Are you alive?");
+}
+
+
+/*******************SLAVE ESP***************/
+
+#define SO 17
+#define SI 4
+#define SCLK 16
+#define SS 34
+
+//#include <WiFi.h>
+#include "SPISlave.h"
+
+void setup()
+{
+    Serial.begin(115200);
+    Serial.setDebugOutput(true);
+
+    // data has been received from the master. Beware that len is always 32
+    // and the buffer is autofilled with zeroes if data is less than 32 bytes long
+    // It's up to the user to implement protocol for handling data length
+    SPISlave.onData([](uint8_t * data, size_t len) {
+        String message = String((char *)data);
+        (void) len;
+        if(message.equals("Hello Slave!")) {
+            slave.setData("Hello Master!");
+        } else if(message.equals("Are you alive?")) {
+            char answer[33];
+            sprintf(answer,"Alive for %lu seconds!", millis() / 1000);
+            SPISlave.setData(answer);
+        } else {
+            SPISlave.setData("Say what?");
+        }
+        Serial.printf("Question: %s\n", (char *)data);
+    });
+
+    // The master has read out outgoing data buffer
+    // that buffer can be set with SPISlave.setData
+    SPISlave.onDataSent([]() {
+        Serial.println("Answer Sent");
+    });
+
+    // status has been received from the master.
+    // The status register is a special register that bot the slave and the master can write to and read from.
+    // Can be used to exchange small data or status information
+    SPISlave.onStatus([](uint32_t data) {
+        Serial.printf("Status: %u\n", data);
+        slave.setStatus(millis()); //set next status
+    });
+
+    // The master has read the status register
+    SPISlave.onStatusSent([]() {
+        Serial.println("Status Sent");
+    });
+
+    // Setup SPI Slave registers and pins
+    SPISlave.begin((gpio_num_t)SO, (gpio_num_t)SI, (gpio_num_t)SCLK, (gpio_num_t)SS);
+
+    // Set the status register (if the master reads it, it will read this value)
+    SPISlave.setStatus(millis());
+
+    // Sets the data registers. Limited to 32 bytes at a time.
+    // SPISlave.setData(uint8_t * data, size_t len); is also available with the same limitation
+    SPISlave.setData("Ask me a question!");
+}
+
+void loop() {}
+
