@@ -4,14 +4,14 @@
 BluetoothSerial SerialBT;
 
 //pinagem do ESP32
-//#define pinDIN 12     //MISO
-//#define pinDOUT 13    //MOSI
-#define pinCS    3      //CS
-#define pinSCLK 14      //SCLK
+//#define pinDIN 19     //MISO
+//#define pinDOUT 23    //MOSI
+#define pinCS    5      //CS
+#define pinSCLK 18      //SCLK
 #define pinSTART 4
-#define pinRESET 2
-#define pinPWDN 22
-#define pinDRDY 16
+#define pinRESET 16
+#define pinPWDN 17
+#define pinDRDY 22
 #define pinCLK   6
 
 //comandos ADS
@@ -88,18 +88,18 @@ void adsReset(){
 //configurar ADS
 void configADS(){
   writeReg(CONFIG1,0xB0);     //7 - 1 (reservado)
-                              //6 - 0 : modo daisy-chain
-                              //5 - 1 : clock externo habilitado
+                              //6 - 1 : modo daisy-chain desativado
+                              //5 - 0 : clock externo desabilitado
                               //4 - 1 (reservado)
                               //3 - 0 
                               //2 - 0 : 16kSPS
                               //1 - 0
                               //0 - 0
                               
-  writeReg(CONFIG2, 0xC0);    //7 - 1 (reservado)
-                              //6 - 1
+  writeReg(CONFIG2, 0xC0);    //7 - 0 (reservado)
+                              //6 - 0
                               //5 - 0
-                              //4 - 0 : sinais de testes externos
+                              //4 - 1 : sinais de testes internos
                               //3 - 0 (reservado)
                               //2 - 0 : (VREFP-VREFN)/2400 (amplitude do sinal de teste)
                               //1 - 0 : fCLK/2^21 (frequência do sinal de teste)
@@ -109,11 +109,11 @@ void configADS(){
                               //6 - 1 (reservado)
                               //5 - 1
                               //4 - 0 : BIAS aberto
-                              //3 - 1 : BIASref ...
-                              //2 - 1 : buffer BIAS ativado
-                              //1 - 1 : BIAS sense ativado
-                              //0 - 1 : BIAS conectado
-
+                              //3 - 1 : rldref = (AVDD-AVSS)/2
+                              //2 - 0 : RLD buffer desativado
+                              //1 - 0 : RLD desativado
+                              //0 - 0 : RLD desconectado
+  
   writeReg(CH1SET, 0x66);     //7 - 0 : ativado
                               //6 - 1 : ganho 24
                               //5 - 1
