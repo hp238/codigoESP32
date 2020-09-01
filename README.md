@@ -1,1 +1,73 @@
 # codigoESP32
+
+/**********************************PINOS ADS1299****************************/
+START p/ HIGH para iniciar conversão
+START p/ LOW ou comando STOP para parar a conversão
+DRDY HIGH p/ dados em conversão e LOW p/ dados disponíveis para leitura
+DIN LOW durante leitura
+DIN  -> 001r rrrr (registro inicial*) e 000n nnnn (número de registros) 
+LOFF_STATP
+LOFF_STATN
+CS LOW para a comunicação SPI
+
+========================PINOS=====================================================================
+
+17 - SRB1 pode ser a referência negativa para todos os canais
+18 - SBR2 pode ser a referencia positiva de qualquer entrada
+19 - AVDD conectar a 1uf p/ AVSS
+20 - AVSS
+21 - AVDD
+22 - AVDD
+23 - AVSS
+24 - VREFP referencia positiva VCC (conectar a VREFN com 10uf)
+25 - VREFN referencia negativa -VCC
+26 - VCAP4 conectar a AVSS com 1uf
+27 - NC deixar aberto
+28 - VCAP1 conectar a AVSS com 100uf
+29 - NC deixar aberto
+30 - VCAP2 conectar a AVSS com 1uf
+31 - RESV1 conectar ao GND
+32 - AVSS
+------------------------------------------------------------------
+33 - DGND terra digital
+34 - DIN entrada serial
+35 - PWDN quando LOW desliga todos os circuitos
+36 - RESET LOW p/ reset
+37 - CLK clock input
+38 - START p/ HIGH para iniciar conversão : p/ LOW ou comando STOP para parar a conversão
+39 - CS LOW para a comunicação serial
+40 - SLCK serial clock input
+41 - DAISY_IN para GND se não usar -> bit 6 CONFIG1 p/ 1
+42 - GPIO1 pino de entrada/saída -> se não usar conectar a DGND com >10kΩ 
+43 - DOUT saída serial
+44 - GPIO2 pino de entrada/saída -> se não usar conectar a DGND com >10kΩ 
+45 - GPIO3 pino de entrada/saída -> se não usar conectar a DGND com >10kΩ 
+46 - GPIO4 pino de entrada/saída -> se não usar conectar a DGND com >10kΩ 
+47 - DRDY HIGH p/ dados em conversão e LOW p/ dados disponíveis para leitura
+48 - DVDD fonte digital -> conectar a DGND com >10kΩ
+------------------------------------------------------------------
+49 - DGND terra digital
+50 - DVDD fonte digital -> conectar a DGND com >10kΩ
+51 - DGND terra digital
+52 - CLKSEL clock select -> LOW p/ clock externo e HIGH p/ clock interno
+53 - AVSS1 terra digital -> conectar a AVSS
+54 - AVDD1 conectar a AVDD
+55 - VCAP3 conectar a AVSS com dois capacitores paralelos 1uf com 1uf
+56 - AVDD
+57 - AVSS
+58 - AVSS
+59 - AVDD
+60 - BIASREF
+61 - BIASINV
+62 - BIASIN
+63 - BIASOUT
+64 - RESERVED deixar aberto
+
+
+00h - 0001 1110
+01h - 1101 0100 240Hz
+02h - 1101 0010
+03h - 0110 1000
+04h - 0000 0001
+05h - 0110 0000
+
