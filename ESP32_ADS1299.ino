@@ -34,7 +34,7 @@ uint8_t START  =  0x08;
 uint8_t STOP   =  0x0A;
 uint8_t WREG   =  0x40;
 uint8_t RREG   =  0x20;
-uint8_t RDATA  =  0x12;
+uint8_t RDATAC  =  0x12;
 
 //Registradores
 uint8_t CONFIG1 = 0x01;
@@ -58,6 +58,7 @@ uint8_t MISC2  = 0x16;
 
 //Variáveis
 int32_t ecgSignal[4];
+int outputCount = 0;
 
 /**************************************************************************************************
  * Inicialização
@@ -96,11 +97,11 @@ void gpioStartup() {
 
 //resetar ADS
 void adsReset(){
-  delay(150);
+  delay(100);
   digitalWrite(pinRESET, LOW);    //reset
   delay(1);
   digitalWrite(pinRESET, HIGH);
-  delay(1);
+  delay(10);
 }
 
 //configurar ADS
@@ -195,6 +196,61 @@ void configADS(){
  * Comandos ESP (SPI)
  **************************************************************************************************/
 
+void printRegisterName(byte _address) {
+
+    if(_address == CONFIG1){
+        Serial.print("CONFIG1, ");
+    }
+    else if(_address == CONFIG2){
+        Serial.print("CONFIG2, ");
+    }
+    else if(_address == CONFIG3){
+        Serial.print("CONFIG3, ");
+    }
+    else if(_address == LOFF){
+        Serial.print("LOFF, ");
+    }
+    else if(_address == CH1SET){
+        Serial.print("CH1SET, ");
+    }
+    else if(_address == CH2SET){
+        Serial.print("CH2SET, ");
+    }
+    else if(_address == CH3SET){
+        Serial.print("CH3SET, ");
+    }
+    else if(_address == CH4SET){
+        Serial.print("CH4SET, ");
+    }
+    else if(_address == BIAS_SENSP){
+        Serial.print("BIAS_SENSP, ");
+    }
+    else if(_address == BIAS_SENSN){
+        Serial.print("BIAS_SENSN, ");
+    }
+    else if(_address == LOFF_SENSP){
+        Serial.print("LOFF_SENSP, ");
+    }
+    else if(_address == LOFF_SENSN){
+        Serial.print("LOFF_SENSN, ");
+    }
+    else if(_address == LOFF_FLIP){
+        Serial.print("LOFF_FLIP, ");
+    }
+    else if(_address == LOFF_STATP){
+        Serial.print("LOFF_STATP, ");
+    }
+    else if(_address == LOFF_STATN){
+        Serial.print("LOFF_STATN, ");
+    }
+    else if(_address == MISC1){
+        Serial.print("MISC1, ");
+    }
+    else if(_address == MISC2){
+        Serial.print("MISC2, ");
+    }
+}
+
 //inicializar comunicação SPI
 void spiStartup() {
   SPI.begin();
@@ -212,15 +268,28 @@ void spiStartup() {
 
  //enviar dados via SPI
  void writeReg(uint8_t reg, uint8_t dat){
+  /*
   digitalWrite(pinCS, LOW);             //ativar comunicação SPI
   SPI.transfer(WREG|reg);
   SPI.transfer(0);
   SPI.transfer(dat);
   digitalWrite(pinCS, HIGH);            //desativar comunicação SPI
+ */
+  digitalWrite(pinCS, LOW); 
+  SPI.transfer(SDATAC);
+  SPI.transfer(WREG|reg);
+  SPI.transfer(0x00);
+  SPI.transfer(dat);
+  SPI.transfer(RDATAC);
+  digitalWrite(pinCS, HIGH);
+  Serial.print("Register 0x");
+  Serial.print(reg, HEX);
+  Serial.println(" modified.");
  }
 
  //ler dados via SPI
- uint8_t readReg(uint8_t reg){
+ void readReg(uint8_t reg){
+  /*
   uint8_t dat;
   digitalWrite(pinCS, LOW);             //ativar comunicação SPI
   SPI.transfer(RREG|reg);
@@ -229,12 +298,34 @@ void spiStartup() {
   digitalWrite(pinCS, HIGH);            //desativar comunicação SPI
   Serial.println(dat);
   return dat;
+  */
+  digitalWrite(pinCS, LOW);
+  SPI.transfer(SDATAC);
+  SPI.transfer(WREG|reg);
+  SPI.transfer(0x00);
+  byte data = SPI.transfer(0x00);
+  printRegisterName(reg);
+  Serial.print("0x");
+  if(reg<16) Serial.print("0");
+  Serial.print(reg, HEX);
+  Serial.print(", ");
+  Serial.print("0x");
+  if(data<16) Serial.print("0");
+  Serial.print(data, HEX);
+  Serial.print(", ");
+  for(byte j = 0; j<8; j++){
+      Serial.print(bitRead(data, 7-j), BIN);
+      if(j!=7) Serial.print(", ");
+  }
+  SPI.transfer(RDATAC);
+  digitalWrite(pinCS, HIGH);
+  Serial.println();
  }
 
  //ler os dados do ADS (24 bits)
  void readData(){
   digitalWrite(pinCS, LOW);             //ativar comunicação SPI
-  SPI.transfer(RDATA);
+  SPI.transfer(RDATAC);
 
   for(int i = 0; i < 4; i++){
     ecgSignal[i] = ((uint32_t)SPI.transfer(0)) << 16;  //le um byte para as 8 primeiras casas, desloca para a 16a
@@ -244,6 +335,32 @@ void spiStartup() {
   }
 
   digitalWrite(pinCS, HIGH);            //desativar comunicação SPI
+ }
+
+ void readData(int n){
+  if(digitalRead(pinDRDY) == LOW){
+    digitalWrite(pinCS, LOW);
+    //long output[4];
+    long dataPacket;
+    for(int i = 0; i<4; i++){
+        for(int j = 0; j<3; j++){
+            byte dataByte = SPI.transfer(0x00);
+            dataPacket = (dataPacket<<8) | dataByte;
+        }
+        ecgSignal[i] = dataPacket;
+        dataPacket = 0;
+    }
+    digitalWrite(pinCS, HIGH);
+    Serial.print(outputCount);
+    Serial.print(", ");
+    for (int i=0;i<4; i++) {
+        Serial.print(ecgSignal[i], HEX);
+        if(i!=3) Serial.print(", ");
+        
+    }
+    Serial.println();
+    outputCount++;
+  }
  }
 
  
