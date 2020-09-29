@@ -58,6 +58,12 @@ void cases(byte bits){
 }
 
 void loop() {
+  byte bits = 0b0;
+  for(int i = 0; i < 8 ; i++){
+    cases(bits);
+    bits = bits + 0b1;
+  }
+  /*
   cases(0b000);
   delay(10);
   cases(0b001);
@@ -74,5 +80,6 @@ void loop() {
   delay(10);
   cases(0b111);
   delay(10);
+  */
 
 }
