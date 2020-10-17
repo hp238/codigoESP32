@@ -1,0 +1,6 @@
+timer 2 interval 1000
+timer 1 interval 10
+timer 3 interval 100
+conectar a porta 7 (saída)
+
+Serial port baud rate 9600
