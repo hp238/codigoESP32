@@ -1,0 +1,50 @@
+private void btmConectar_Click(object sender, EventArgs e)
+        {
+            this.inicializaVetor();
+            if (serialPort2.IsOpen == false)
+            {
+                try
+                {
+                    serialPort2.PortName = comboBox1.Items[comboBox1.SelectedIndex].ToString();
+                    serialPort2.Open();
+                    //serialPort2.Write("ok");
+
+                }
+                catch
+                {
+                    return;
+                }
+                if (serialPort2.IsOpen)
+                {
+                    btmConect.Text = "Desconectar";
+                    comboBox1.Enabled = false;
+                }
+            }
+            else
+            {
+                try
+                {
+                    this.showGraphConect = !this.showGraphConect;
+                    serialPort2.Close();
+                    comboBox1.Enabled = true;
+                    btmConect.Text = "Conectar";
+                    btmConect.BackColor = System.Drawing.Color.FromArgb(255, 165, 0);
+                    this.auxGraphs = true;
+                }
+                catch
+                {
+                    return;
+                }
+
+            }
+
+            if (serialPort2.IsOpen == true)
+            {
+                btmConect.BackColor = System.Drawing.Color.FromArgb(255, 0, 0);
+                this.inicializaVetor();
+                this.inicializarDicionarios();
+                this.showGraphConect = !this.showGraphConect;
+                this.showGraphRead = false;
+                this.showGraphTest = false;
+            }
+        }
